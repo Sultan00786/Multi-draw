@@ -1,8 +1,9 @@
-import express from "express";
 import type { Express } from "express";
+import express from "express";
 import jwt from "jsonwebtoken";
 import { JWT_TOKEN } from "./config";
 import { authMiddleware } from "./middleware";
+import { UserRequest } from "./types";
 
 const app: Express = express();
 app.get("/", (_req, res) => {
@@ -33,7 +34,7 @@ app.post("/signup", (_req, res) => {
 app.post("/room", authMiddleware, (req, res) => {
   // DB call
   res.status(200).json({
-    messag: `User join with userId, ${req.userId}`,
+    messag: `User join with userId, ${(req as UserRequest).userId}`,
     jwt: "123",
   });
 });
