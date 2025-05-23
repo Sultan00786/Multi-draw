@@ -1,11 +1,40 @@
 import express from "express";
+import type { Express } from "express";
+import jwt from "jsonwebtoken";
+import { JWT_TOKEN } from "./config";
+import { authMiddleware } from "./middleware";
 
-const app = express();
-
+const app: Express = express();
 app.get("/", (_req, res) => {
   res.json({
     success: true,
     message: "Hellow World",
+  });
+});
+
+app.post("/login", (_req, res) => {
+  // DB call
+  const token = jwt.sign({ userId: "123" }, JWT_TOKEN);
+  res.json({
+    messag: "User login",
+    token: token,
+  });
+});
+
+app.post("/signup", (_req, res) => {
+  // DB call
+  const token = jwt.sign({ userId: "123" }, JWT_TOKEN);
+  res.status(200).json({
+    messag: "User signup",
+    token: token,
+  });
+});
+
+app.post("/room", authMiddleware, (req, res) => {
+  // DB call
+  res.status(200).json({
+    messag: `User join with userId, ${req.userId}`,
+    jwt: "123",
   });
 });
 
