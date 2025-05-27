@@ -1,5 +1,5 @@
 {
-  "name": "backend-commons",
+  "name": "@repo/backend-common",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

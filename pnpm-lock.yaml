@@ -20,6 +20,9 @@ importers:
 
   apps/https-server:
     dependencies:
+      '@repo/backend-common':
+        specifier: workspace:*
+        version: link:../../packages/backend-common
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -45,6 +48,9 @@ importers:
 
   apps/webSocket-server:
     dependencies:
+      '@repo/backend-common':
+        specifier: workspace:*
+        version: link:../../packages/backend-common
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config

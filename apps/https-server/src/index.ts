@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import express from "express";
 import jwt from "jsonwebtoken";
-import { JWT_TOKEN } from "./config";
 import { authMiddleware } from "./middleware";
 import type { UserRequest } from "./types";
+import { JWT_TOKEN } from "@repo/backend-common/config";
 
 const app: Express = express();
 app.get("/", (_req, res) => {
