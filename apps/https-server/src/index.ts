@@ -4,7 +4,11 @@ import jwt from "jsonwebtoken";
 import { authMiddleware } from "./middleware";
 import type { UserRequest } from "./types";
 import { JWT_TOKEN } from "@repo/backend-common/config";
-import { userLoginSchema, userSignUpSchema } from "@repo/common/schema";
+import {
+  createRoomSchema,
+  userLoginSchema,
+  userSignUpSchema,
+} from "@repo/common/schema";
 import { zod } from "@repo/common/zod";
 
 const app: Express = express();
@@ -66,8 +70,24 @@ app.post("/signup", (req, res) => {
 
 app.post("/room", authMiddleware, (req: UserRequest, res) => {
   // DB call
+
+  let roomCreateData;
+  try {
+    roomCreateData = createRoomSchema.safeParse(req.body);
+    if (!roomCreateData.success) throw Error;
+  } catch (error) {
+    console.log("roomCreateData: ", roomCreateData);
+    console.log("message: ", "Error with zod validation");
+    console.log("error: ", roomCreateData?.error);
+    if (!roomCreateData?.success)
+      res.status(400).json({ errors: roomCreateData?.error });
+    else res.status(500).json({ error: "Internal Server Error" });
+    return;
+  }
+
   res.status(200).json({
     messag: `User join with userId, ${req.userId}`,
+    roomId: roomCreateData.data.slug,
   });
 });
 
