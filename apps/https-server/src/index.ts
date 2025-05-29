@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { authMiddleware } from "./middleware";
 import type { UserRequest } from "./types";
 import { JWT_TOKEN } from "@repo/backend-common/config";
-import { userSignUpSchema } from "@repo/common/schema";
+import { userLoginSchema, userSignUpSchema } from "@repo/common/schema";
 import { zod } from "@repo/common/zod";
 
 const app: Express = express();
@@ -19,6 +19,18 @@ app.get("/", (_req, res) => {
 
 app.post("/login", (req, res) => {
   // DB call
+  let loginData;
+  try {
+    loginData = userSignUpSchema.safeParse(req.body);
+    if (!loginData.success) throw Error;
+  } catch (error) {
+    console.log("loginData: ", loginData);
+    console.log("message: ", "Error with zod validation");
+    console.log("error: ", loginData?.error);
+    if (!loginData?.success) res.status(400).json({ errors: loginData?.error });
+    else res.status(500).json({ error: "Internal Server Error" });
+    return;
+  }
   const token = jwt.sign({ userId: "123" }, JWT_TOKEN);
   res.json({
     messag: "User login",
