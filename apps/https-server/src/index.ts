@@ -85,6 +85,8 @@ app.post("/room", authMiddleware, (req: UserRequest, res) => {
     return;
   }
 
+  console.log("zod data: ", roomCreateData);
+
   res.status(200).json({
     messag: `User join with userId, ${req.userId}`,
     roomId: roomCreateData.data.slug,
