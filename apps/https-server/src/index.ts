@@ -4,8 +4,12 @@ import jwt from "jsonwebtoken";
 import { authMiddleware } from "./middleware";
 import type { UserRequest } from "./types";
 import { JWT_TOKEN } from "@repo/backend-common/config";
+import { userSignUpSchema } from "@repo/common/schema";
+import { zod } from "@repo/common/zod";
 
 const app: Express = express();
+
+app.use(express.json());
 app.get("/", (_req, res) => {
   res.json({
     success: true,
@@ -23,12 +27,29 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/signup", (req, res) => {
+  let signupData;
+  try {
+    signupData = userSignUpSchema.safeParse(req.body);
+    if (!signupData.success) throw Error;
+  } catch (error) {
+    console.log("signupData: ", signupData);
+    console.log("message: ", "Error with zod validation");
+    console.log("error: ", signupData?.error);
+    if (!signupData?.success)
+      res.status(400).json({ errors: signupData?.error });
+    else res.status(500).json({ error: "Internal Server Error" });
+    return;
+  }
+
+  console.log("signupData: ", signupData);
+
   // DB call
   const token = jwt.sign({ userId: "123" }, JWT_TOKEN);
   res.status(200).json({
     messag: "User signup",
     token: token,
   });
+  return;
 });
 
 app.post("/room", authMiddleware, (req: UserRequest, res) => {
