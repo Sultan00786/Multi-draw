@@ -24,6 +24,7 @@ app.get("/", (_req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const loginData = userLoginSchema.safeParse(req.body);
+    console.log(loginData);
     if (!loginData?.success) {
       console.log(loginData);
       res.status(400).json({ errors: loginData?.error });
@@ -35,7 +36,7 @@ app.post("/login", async (req, res) => {
       .where(eq(users.email, loginData.data.email));
 
     if (!user[0]) {
-      res.status(400).json({ message: "User not found" });
+      res.status(400).json({ message: "User not found", data: user });
       return;
     }
 
@@ -51,30 +52,45 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.post("/signup", (req, res) => {
-  let signupData;
+app.post("/signup", async (req, res) => {
   try {
-    signupData = userSignUpSchema.safeParse(req.body);
-    if (!signupData.success) throw Error;
-  } catch (error) {
-    console.log("signupData: ", signupData);
-    console.log("message: ", "Error with zod validation");
-    console.log("error: ", signupData?.error);
-    if (!signupData?.success)
+    const signupData = userSignUpSchema.safeParse(req.body);
+    if (!signupData.success) {
+      console.log(signupData);
       res.status(400).json({ errors: signupData?.error });
-    else res.status(500).json({ error: "Internal Server Error" });
+      return;
+    }
+
+    console.log("signupData: ", signupData);
+
+    const user = await db
+      .insert(users)
+      .values({
+        email: signupData.data.email,
+        password: signupData.data.password,
+        photo: signupData.data.photo,
+        name: signupData.data.name,
+      })
+      .returning();
+
+    if (!user[0]?.id) {
+      res
+        .status(400)
+        .json({ message: "Unable to signup the user", data: user });
+      return;
+    }
+    // DB call
+    const token = jwt.sign({ userId: user[0].id }, JWT_TOKEN);
+    res.status(200).json({
+      messag: "User signup",
+      token: token,
+    });
+    return;
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
     return;
   }
-
-  console.log("signupData: ", signupData);
-
-  // DB call
-  const token = jwt.sign({ userId: "123" }, JWT_TOKEN);
-  res.status(200).json({
-    messag: "User signup",
-    token: token,
-  });
-  return;
 });
 
 app.post("/room", authMiddleware, (req: UserRequest, res) => {
