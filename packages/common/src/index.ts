@@ -14,4 +14,5 @@ export const userLoginSchema = z.object({
 
 export const createRoomSchema = z.object({
   slug: string().min(1),
+  adminId: string().ulid(),
 });

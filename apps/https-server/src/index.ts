@@ -9,7 +9,7 @@ import {
   userLoginSchema,
   userSignUpSchema,
 } from "@repo/common/schema";
-import { db, eq, users } from "@repo/db/tables";
+import { db, eq, rooms, users } from "@repo/db/tables";
 
 const app: Express = express();
 
@@ -93,29 +93,42 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("/room", authMiddleware, (req: UserRequest, res) => {
+app.post("/room", authMiddleware, async (req: UserRequest, res) => {
   // DB call
 
-  let roomCreateData;
   try {
-    roomCreateData = createRoomSchema.safeParse(req.body);
-    if (!roomCreateData.success) throw Error;
-  } catch (error) {
-    console.log("roomCreateData: ", roomCreateData);
-    console.log("message: ", "Error with zod validation");
-    console.log("error: ", roomCreateData?.error);
-    if (!roomCreateData?.success)
+    const roomCreateData = createRoomSchema.safeParse(req.body);
+    if (!roomCreateData.success) {
+      console.log(roomCreateData);
       res.status(400).json({ errors: roomCreateData?.error });
-    else res.status(500).json({ error: "Internal Server Error" });
+      return;
+    }
+
+    if (!roomCreateData.data.slug || !roomCreateData.data.adminId) {
+      res.status(400).json({ error: "Slug is required" });
+      return;
+    }
+    const room = await db
+      .insert(rooms)
+      .values({
+        slug: roomCreateData.data.slug,
+        adminId: req.userId as string,
+      })
+      .returning();
+
+    if (room.length === 0 || !room[0]?.id) {
+      res.status(400).json({ error: "Unable to create room" });
+      return;
+    }
+    res.status(200).json({
+      messag: `User join with userId, ${req.userId}`,
+      roomId: roomCreateData.data.slug,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
     return;
   }
-
-  console.log("zod data: ", roomCreateData);
-
-  res.status(200).json({
-    messag: `User join with userId, ${req.userId}`,
-    roomId: roomCreateData.data.slug,
-  });
 });
 
 const port = 8000;
