@@ -9,7 +9,7 @@ import {
   userLoginSchema,
   userSignUpSchema,
 } from "@repo/common/schema";
-import { zod } from "@repo/common/zod";
+import { db, eq, users } from "@repo/db/tables";
 
 const app: Express = express();
 
@@ -21,25 +21,34 @@ app.get("/", (_req, res) => {
   });
 });
 
-app.post("/login", (req, res) => {
-  // DB call
-  let loginData;
+app.post("/login", async (req, res) => {
   try {
-    loginData = userSignUpSchema.safeParse(req.body);
-    if (!loginData.success) throw Error;
+    const loginData = userLoginSchema.safeParse(req.body);
+    if (!loginData?.success) {
+      console.log(loginData);
+      res.status(400).json({ errors: loginData?.error });
+      return;
+    }
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, loginData.data.email));
+
+    if (!user[0]) {
+      res.status(400).json({ message: "User not found" });
+      return;
+    }
+
+    const token = jwt.sign({ userId: user[0].id }, JWT_TOKEN);
+    res.json({
+      messag: "User login",
+      token: token,
+    });
   } catch (error) {
-    console.log("loginData: ", loginData);
-    console.log("message: ", "Error with zod validation");
-    console.log("error: ", loginData?.error);
-    if (!loginData?.success) res.status(400).json({ errors: loginData?.error });
-    else res.status(500).json({ error: "Internal Server Error" });
+    console.log(error);
+    res.status(500).json({ error: error, message: "Internal Server Error" });
     return;
   }
-  const token = jwt.sign({ userId: "123" }, JWT_TOKEN);
-  res.json({
-    messag: "User login",
-    token: token,
-  });
 });
 
 app.post("/signup", (req, res) => {

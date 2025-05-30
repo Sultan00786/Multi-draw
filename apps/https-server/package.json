@@ -10,9 +10,6 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "@repo/backend-common": "workspace:*",
-    "@repo/common": "workspace:*",
     "@types/jsonwebtoken": "^9.0.9",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
@@ -24,6 +21,10 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "@types/express": "^5.0.2"
+    "@types/express": "^5.0.2",
+    "@repo/typescript-config": "workspace:*",
+    "@repo/backend-common": "workspace:*",
+    "@repo/common": "workspace:*",
+    "@repo/db": "workspace:*"
   }
 }
