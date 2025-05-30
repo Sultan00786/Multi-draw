@@ -103,11 +103,6 @@ app.post("/room", authMiddleware, async (req: UserRequest, res) => {
       res.status(400).json({ errors: roomCreateData?.error });
       return;
     }
-
-    if (!roomCreateData.data.slug || !roomCreateData.data.adminId) {
-      res.status(400).json({ error: "Slug is required" });
-      return;
-    }
     const room = await db
       .insert(rooms)
       .values({
