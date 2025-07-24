@@ -1,3 +1,7 @@
+
+<img width="1812" height="1093" alt="image" src="https://github.com/user-attachments/assets/87acb54c-2c8b-4cf3-8497-5c40e2a8e0b3" />
+
+
 # Turborepo starter
 
 This Turborepo starter is maintained by the Turborepo core team.
