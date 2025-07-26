@@ -61,7 +61,16 @@ app.post("/signup", async (req, res) => {
       return;
     }
 
-    console.log("signupData: ", signupData);
+    // console.log("signupData: ", signupData);
+
+    const existUser = await db.query.users.findFirst({
+      where: eq(users.email, signupData.data.email),
+    });
+
+    if (existUser) {
+      res.status(400).json({ message: "User already exist", data: existUser });
+      return;
+    }
 
     const user = await db
       .insert(users)
