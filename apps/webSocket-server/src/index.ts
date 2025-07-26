@@ -1,24 +1,17 @@
 import { WebSocketServer } from "ws";
-import jwt from "jsonwebtoken";
 import { JWT_TOKEN } from "@repo/backend-common/config";
+import { WsAuthRequest } from "./types";
+import { wsAuthCheck } from "./middleware";
 
 const port = 8001;
 const wss = new WebSocketServer({ port: port });
 
-wss.on("connection", (ws, req: { url: string }) => {
-  const url = req.url.split("?")[1];
-  const params = new URLSearchParams(url);
-  const token = params.get("token");
-
-  if (!token) {
+wss.on("connection", (ws, req: WsAuthRequest) => {
+  const isAuthenticated = wsAuthCheck(req);
+  if (!isAuthenticated) {
     ws.close();
     return;
   }
 
-  const decoded = jwt.verify(token, JWT_TOKEN);
-  if (typeof decoded !== "object" || !decoded || !decoded.userId) {
-    ws.close();
-    return;
-  }
   console.log("A new client is connected ", ws);
 });

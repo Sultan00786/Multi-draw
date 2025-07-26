@@ -9,7 +9,7 @@ import {
   userLoginSchema,
   userSignUpSchema,
 } from "@repo/common/schema";
-import { zod } from "@repo/common/zod";
+import { db, eq, rooms, users } from "@repo/db/tables";
 
 const app: Express = express();
 
@@ -21,76 +21,127 @@ app.get("/", (_req, res) => {
   });
 });
 
-app.post("/login", (req, res) => {
-  // DB call
-  let loginData;
+app.post("/login", async (req, res) => {
   try {
-    loginData = userSignUpSchema.safeParse(req.body);
-    if (!loginData.success) throw Error;
+    const loginData = userLoginSchema.safeParse(req.body);
+    console.log(loginData);
+    if (!loginData?.success) {
+      console.log(loginData);
+      res.status(400).json({ errors: loginData?.error });
+      return;
+    }
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, loginData.data.email));
+
+    if (!user[0]) {
+      res.status(400).json({ message: "User not found", data: user });
+      return;
+    }
+
+    const token = jwt.sign({ userId: user[0].id }, JWT_TOKEN);
+    res.json({
+      messag: "User login",
+      token: token,
+    });
   } catch (error) {
-    console.log("loginData: ", loginData);
-    console.log("message: ", "Error with zod validation");
-    console.log("error: ", loginData?.error);
-    if (!loginData?.success) res.status(400).json({ errors: loginData?.error });
-    else res.status(500).json({ error: "Internal Server Error" });
+    console.log(error);
+    res.status(500).json({ error: error, message: "Internal Server Error" });
     return;
   }
-  const token = jwt.sign({ userId: "123" }, JWT_TOKEN);
-  res.json({
-    messag: "User login",
-    token: token,
-  });
 });
 
-app.post("/signup", (req, res) => {
-  let signupData;
+app.post("/signup", async (req, res) => {
   try {
-    signupData = userSignUpSchema.safeParse(req.body);
-    if (!signupData.success) throw Error;
-  } catch (error) {
-    console.log("signupData: ", signupData);
-    console.log("message: ", "Error with zod validation");
-    console.log("error: ", signupData?.error);
-    if (!signupData?.success)
+    const signupData = userSignUpSchema.safeParse(req.body);
+    if (!signupData.success) {
+      console.log(signupData);
       res.status(400).json({ errors: signupData?.error });
-    else res.status(500).json({ error: "Internal Server Error" });
+      return;
+    }
+
+    // console.log("signupData: ", signupData);
+
+    const existUser = await db.query.users.findFirst({
+      where: eq(users.email, signupData.data.email),
+    });
+
+    if (existUser) {
+      res.status(400).json({ message: "User already exist", data: existUser });
+      return;
+    }
+
+    const user = await db
+      .insert(users)
+      .values({
+        email: signupData.data.email,
+        password: signupData.data.password,
+        photo: signupData.data.photo,
+        name: signupData.data.name,
+      })
+      .returning();
+
+    if (!user[0]?.id) {
+      res
+        .status(400)
+        .json({ message: "Unable to signup the user", data: user });
+      return;
+    }
+    // DB call
+    const token = jwt.sign({ userId: user[0].id }, JWT_TOKEN);
+    res.status(200).json({
+      messag: "User signup",
+      token: token,
+    });
+    return;
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
     return;
   }
-
-  console.log("signupData: ", signupData);
-
-  // DB call
-  const token = jwt.sign({ userId: "123" }, JWT_TOKEN);
-  res.status(200).json({
-    messag: "User signup",
-    token: token,
-  });
-  return;
 });
 
-app.post("/room", authMiddleware, (req: UserRequest, res) => {
+app.post("/room", authMiddleware, async (req: UserRequest, res) => {
   // DB call
 
-  let roomCreateData;
   try {
-    roomCreateData = createRoomSchema.safeParse(req.body);
-    if (!roomCreateData.success) throw Error;
-  } catch (error) {
-    console.log("roomCreateData: ", roomCreateData);
-    console.log("message: ", "Error with zod validation");
-    console.log("error: ", roomCreateData?.error);
-    if (!roomCreateData?.success)
+    const roomCreateData = createRoomSchema.safeParse(req.body);
+    if (!roomCreateData.success) {
+      console.log(roomCreateData);
       res.status(400).json({ errors: roomCreateData?.error });
-    else res.status(500).json({ error: "Internal Server Error" });
+      return;
+    }
+
+    const existingRoom = await db.query.rooms.findFirst({
+      where: eq(rooms.slug, roomCreateData.data.slug),
+    });
+    if (existingRoom) {
+      res.status(400).json({ error: "Room already exist" });
+      return;
+    }
+
+    const room = await db
+      .insert(rooms)
+      .values({
+        slug: roomCreateData.data.slug,
+        adminId: req.userId as string,
+      })
+      .returning();
+
+    if (room.length === 0 || !room[0]?.id) {
+      res.status(400).json({ error: "Unable to create room" });
+      return;
+    }
+    res.status(200).json({
+      messag: `User join with userId, ${req.userId}`,
+      roomId: roomCreateData.data.slug,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
     return;
   }
-
-  console.log("zod data: ", roomCreateData);
-
-  res.status(200).json({
-    messag: `User join with userId, ${req.userId}`,
-    roomId: roomCreateData.data.slug,
-  });
 });
 
 const port = 8000;
