@@ -103,6 +103,15 @@ app.post("/room", authMiddleware, async (req: UserRequest, res) => {
       res.status(400).json({ errors: roomCreateData?.error });
       return;
     }
+
+    const existingRoom = await db.query.rooms.findFirst({
+      where: eq(rooms.slug, roomCreateData.data.slug),
+    });
+    if (existingRoom) {
+      res.status(400).json({ error: "Room already exist" });
+      return;
+    }
+
     const room = await db
       .insert(rooms)
       .values({
