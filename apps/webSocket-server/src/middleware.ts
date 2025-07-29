@@ -1,8 +1,9 @@
 import { JWT_TOKEN } from "@repo/backend-common/config";
+import { db, eq, users } from "@repo/db/tables";
 import { WsAuthRequest } from "./types";
 import jwt from "jsonwebtoken";
 
-export function wsAuthCheck(req: WsAuthRequest) {
+export async function wsAuthCheck(req: WsAuthRequest): Promise<false | string> {
   const url = req.url.split("?")[1];
   const params = new URLSearchParams(url);
   const token = params.get("token");
@@ -14,5 +15,9 @@ export function wsAuthCheck(req: WsAuthRequest) {
   if (typeof decoded !== "object" || !decoded || !decoded.userId) {
     return false;
   }
-  return true;
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, decoded.userId),
+  });
+  if (!user || !user.id) return false;
+  return user.id;
 }
