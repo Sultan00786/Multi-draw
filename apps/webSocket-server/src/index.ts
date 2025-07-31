@@ -30,6 +30,8 @@ wss.on("connection", async (ws, req: WsAuthRequest) => {
     if (typeof data === "string") parseData = JSON.parse(data);
     else parseData = data;
 
+    console.log("Received message from client: ", parseData);
+
     // on join_room
     if (parseData.type === "join_room") {
       try {
@@ -50,7 +52,9 @@ wss.on("connection", async (ws, req: WsAuthRequest) => {
         console.log("error in join_room", error);
       }
     }
-    console.log("Received message from client: ", parseData);
+
+    if (parseData.type === "leave_room") {
+    }
   });
 
   ws.on("error", console.error);
