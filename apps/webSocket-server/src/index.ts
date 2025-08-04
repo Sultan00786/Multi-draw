@@ -1,5 +1,4 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { JWT_TOKEN } from "@repo/backend-common/config";
 import { MessageEventData, WsAuthRequest } from "./types";
 import { wsAuthCheck } from "./middleware";
 import { db, eq, rooms } from "@repo/db/tables";
