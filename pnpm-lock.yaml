@@ -54,12 +54,6 @@ importers:
 
   apps/webSocket-server:
     dependencies:
-      '@repo/backend-common':
-        specifier: workspace:*
-        version: link:../../packages/backend-common
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
       '@types/jsonwebtoken':
         specifier: ^9.0.9
         version: 9.0.9
@@ -78,8 +72,22 @@ importers:
       ws:
         specifier: ^8.18.2
         version: 8.18.2
+    devDependencies:
+      '@repo/backend-common':
+        specifier: workspace:*
+        version: link:../../packages/backend-common
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
 
   packages/backend-common:
+    dependencies:
+      dotenv:
+        specifier: ^16.5.0
+        version: 16.5.0
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -103,6 +111,9 @@ importers:
         specifier: ^8.16.0
         version: 8.16.0
     devDependencies:
+      '@repo/backend-common':
+        specifier: workspace:*
+        version: link:../backend-common
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
